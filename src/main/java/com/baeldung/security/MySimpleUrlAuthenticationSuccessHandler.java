@@ -1,7 +1,9 @@
 package com.baeldung.security;
 
 import com.baeldung.persistence.model.User;
+import com.baeldung.security.common.Constants;
 import com.baeldung.service.DeviceService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,12 +84,17 @@ public class MySimpleUrlAuthenticationSuccessHandler implements AuthenticationSu
     protected String determineTargetUrl(final Authentication authentication) {
         boolean isUser = false;
         boolean isAdmin = false;
+        boolean isMgr = false;
         final Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         for (final GrantedAuthority grantedAuthority : authorities) {
             if (grantedAuthority.getAuthority().equals("READ_PRIVILEGE")) {
                 isUser = true;
             } else if (grantedAuthority.getAuthority().equals("WRITE_PRIVILEGE")) {
                 isAdmin = true;
+                isUser = false;
+                break;
+            } else if(StringUtils.equals(Constants.ROLE_MGR, grantedAuthority.getAuthority())) {
+                isMgr = true;
                 isUser = false;
                 break;
             }
@@ -104,6 +111,8 @@ public class MySimpleUrlAuthenticationSuccessHandler implements AuthenticationSu
             return "/homepage.html?user="+username;
         } else if (isAdmin) {
             return "/console";
+        } else if (isMgr) {
+            return "/management.html";
         } else {
             throw new IllegalStateException();
         }
